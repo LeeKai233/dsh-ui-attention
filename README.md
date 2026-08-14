@@ -48,28 +48,35 @@ profile patch layer (`~/.dsh/profiles/web/cordis.patch.yml`):
 
 ## Usage
 
-- Open **General settings** in the web UI: the **Notifications** row holds four
-  switches (Notifications / Sound / Title flash / Background only) and a
-  **Send test notification** button.
+- Open **General settings** in the web UI: the **Notifications** row holds five
+  iOS-style switches (Notifications / Sound / Title flash / Background only /
+  Turn finished) and a **Send test notification** button.
+- **When do alerts fire?** Whenever the DSH page is not on top — the tab is
+  hidden, the window is minimized, or another application covers it
+  (document.hidden or !document.hasFocus()). While the page is on top and
+  focused, everything stays quiet.
+- Two event kinds alert: pending interactions (a question, a plan approval, or
+  a tool approval) and **finished turns** (any session's running flip), each
+  once per turn, with the session title in the body; clicking a notification
+  focuses the window and opens the session.
 - Browser notification permission is requested when you click the test button
   (browsers only ask from a user gesture). While permission is `default`, the
   row shows an enable hint and the plugin falls back to sound + title flash.
-- Alerts fire per session: the first time a pending interaction appears (or
-  its kind changes) at a page-hidden moment. Refreshing or reconnecting does
-  not re-alert; resolving the interaction closes its notification and stops
-  the title flash.
+- Refreshing or reconnecting does not re-alert; resolving the interaction
+  closes its notification and stops the title flash.
 
 ## Settings
 
-The four switches (all default true) persist in the browser under the
+The five switches (all default true) persist in the browser under the
 localStorage key dsh-ui-attention.settings:
 
 | Field | Meaning |
 | --- | --- |
 | enabled | Master switch: popup, sound, and title flash all stay quiet when false |
 | sound | Play the WebAudio beep |
-| titleFlash | Flash the tab title while the page is hidden |
-| onlyWhenHidden | Alert only when the page is not visible; false alerts in the foreground too |
+| titleFlash | Flash the tab title while pending work is hidden |
+| onlyWhenHidden | Alert only while the page is not on top; false alerts even on top |
+| notifyOnDone | Pop up and beep when a session's turn finishes |
 
 Why browser-local instead of the Host settings document: the rc.6 web API
 gateway only exposes a hardcoded allowlist of settings namespaces to the
