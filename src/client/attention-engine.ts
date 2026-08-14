@@ -26,3 +26,36 @@ export function pendingOf(state: SessionListLike): Map<string, PendingStatus> {
   }
   return map
 }
+
+/** One transition set between two pending maps. */
+export interface PendingDiff {
+  /** Sessions that gained a pending interaction (none -> status). */
+  added: Map<string, PendingStatus>
+  /** Sessions whose pending status changed (status -> other status). */
+  changed: Map<string, PendingStatus>
+  /** Sessions whose pending interaction resolved or vanished (status -> none). */
+  cleared: Set<string>
+}
+
+/**
+ * Diff two pending maps into added/changed/cleared transition sets.
+ * @param prev - previous pending map.
+ * @param next - current pending map.
+ * @returns the transition sets (all empty when nothing changed).
+ */
+export function diffPending(
+  prev: Map<string, PendingStatus>, next: Map<string, PendingStatus>,
+): PendingDiff {
+  const added = new Map<string, PendingStatus>()
+  const changed = new Map<string, PendingStatus>()
+  const cleared = new Set<string>()
+  for (const [id, status] of next) {
+    const before = prev.get(id)
+    if (before === undefined) added.set(id, status)
+    else if (before !== status) changed.set(id, status)
+  }
+  for (const id of prev.keys()) {
+    if (!next.has(id)) cleared.add(id)
+  }
+  return { added, changed, cleared }
+}
