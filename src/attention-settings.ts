@@ -15,8 +15,10 @@ export interface AttentionSettings {
   sound: boolean
   /** Flash the tab title while a pending interaction is hidden. */
   titleFlash: boolean
-  /** Alert only when the page is not visible; false alerts even in the foreground. */
+  /** Alert only while the page is not on top (hidden or unfocused); false alerts even on top. */
   onlyWhenHidden: boolean
+  /** Alert when a session's turn finishes while the page is not on top. */
+  notifyOnDone: boolean
 }
 
 /** In-memory defaults used while the Host settings scope is still loading. */
@@ -25,4 +27,5 @@ export const DEFAULT_ATTENTION_SETTINGS: AttentionSettings = {
   sound: true,
   titleFlash: true,
   onlyWhenHidden: true,
+  notifyOnDone: true,
 }

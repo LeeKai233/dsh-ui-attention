@@ -13,4 +13,5 @@ export const AttentionSettingsSchema: z<AttentionSettings> = z.object({
   sound: z.boolean().default(true),
   titleFlash: z.boolean().default(true),
   onlyWhenHidden: z.boolean().default(true),
+  notifyOnDone: z.boolean().default(true),
 })

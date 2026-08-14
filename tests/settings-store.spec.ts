@@ -20,8 +20,9 @@ describe('settings store', () => {
     instance.actions.setSound(false)
     instance.actions.setTitleFlash(false)
     instance.actions.setOnlyWhenHidden(false)
+    instance.actions.setNotifyOnDone(false)
     expect(instance.getSnapshot()).toEqual({
-      enabled: false, sound: false, titleFlash: false, onlyWhenHidden: false,
+      enabled: false, sound: false, titleFlash: false, onlyWhenHidden: false, notifyOnDone: false,
     })
     instance.actions.setEnabled(true)
     expect(instance.getSnapshot().enabled).toBe(true)

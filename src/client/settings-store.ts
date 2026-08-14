@@ -22,6 +22,7 @@ export type AttentionSettingsActions = {
   setSound(draft: AttentionSettings, value: boolean): void
   setTitleFlash(draft: AttentionSettings, value: boolean): void
   setOnlyWhenHidden(draft: AttentionSettings, value: boolean): void
+  setNotifyOnDone(draft: AttentionSettings, value: boolean): void
 }
 
 /**
@@ -38,6 +39,7 @@ export function createSettingsStore(): EngineStoreHandle<AttentionSettings, Atte
       setSound: (d, value) => { d.sound = value },
       setTitleFlash: (d, value) => { d.titleFlash = value },
       setOnlyWhenHidden: (d, value) => { d.onlyWhenHidden = value },
+      setNotifyOnDone: (d, value) => { d.notifyOnDone = value },
     },
   })
 }
