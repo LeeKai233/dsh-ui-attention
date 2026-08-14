@@ -1,5 +1,7 @@
 # dsh-ui-attention
 
+Repository: https://github.com/LeeKai233/dsh-ui-attention
+
 Browser attention alerts for the DeepSeek Harness (DSH) web UI: when an agent
 needs you — an `ask_user_question` question, a plan waiting for approval, or a
 tool approval — and the page is hidden or in the background, this plugin fires:

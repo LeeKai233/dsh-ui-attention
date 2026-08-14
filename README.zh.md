@@ -1,5 +1,7 @@
 # dsh-ui-attention
 
+仓库地址：https://github.com/LeeKai233/dsh-ui-attention
+
 DeepSeek Harness (DSH) Web UI 的操作提醒插件：当 agent 需要你处理——
 `ask_user_question` 提问、等待批准的计划、工具/命令审批——而页面被隐藏或在后台时，
 插件会触发：
