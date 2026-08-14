@@ -1,7 +1,19 @@
 {
   "name": "dsh-ui-attention",
   "version": "0.1.0",
-  "description": "DSH web attention alerts: browser notification, beep, and tab-title flash when the agent needs you (questions, plan approval, tool approvals)",
+  "description": "DSH web attention alerts: browser notification, beep, and tab-title flash when the page is not on top (questions, approvals, finished turns)",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "notification",
+    "web",
+    "plugin",
+    "attention"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeeKai233/dsh-ui-attention.git"
+  },
   "type": "module",
   "main": "lib/index.js",
   "exports": {
