@@ -1,6 +1,6 @@
 {
   "name": "dsh-ui-attention",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DSH web attention alerts: browser notification, beep, and tab-title flash when the page is not on top (questions, approvals, finished turns)",
   "keywords": [
     "dsh",
