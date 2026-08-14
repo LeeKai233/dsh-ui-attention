@@ -1,0 +1,6 @@
+# dsh-ui-attention bundle patch: inserts the browser attention-alert plugin
+# row into the web profile's client roster. Applied automatically once the
+# package joins the profile's bundle list (dsh plugin --profile web add ...).
+- insert:
+    - id: ui-attention
+      name: "dsh-ui-attention"
