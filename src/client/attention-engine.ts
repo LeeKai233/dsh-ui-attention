@@ -118,13 +118,14 @@ export function step(
   const next = pendingOf(snapshot)
   const actions: AttentionAction[] = []
   const alerted = new Map(state.alerted)
+  const gated = !settings.enabled || (settings.onlyWhenHidden && visibilityState === 'visible')
   if (state.seeded) {
     const diff = diffPending(state.pending, next)
     for (const id of diff.cleared) {
       if (alerted.delete(id)) actions.push({ kind: 'dismiss', sessionId: id })
     }
     for (const [id, status] of next) {
-      if (alerted.get(id) !== status) {
+      if (alerted.get(id) !== status && !gated) {
         alerted.set(id, status)
         actions.push({ kind: 'alert', sessionId: id, status })
       }
@@ -133,7 +134,7 @@ export function step(
     // Baseline seed: mark everything as already alerted, alert nothing.
     for (const [id, status] of next) alerted.set(id, status)
   }
-  const flashing = next.size > 0 && settings.titleFlash && visibilityState !== 'visible'
+  const flashing = next.size > 0 && settings.enabled && settings.titleFlash && visibilityState !== 'visible'
   if (flashing && !state.flashing) actions.push({ kind: 'flash-start' })
   else if (!flashing && state.flashing) actions.push({ kind: 'flash-stop' })
   return {
