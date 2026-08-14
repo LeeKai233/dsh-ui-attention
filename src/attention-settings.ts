@@ -26,3 +26,11 @@ export const AttentionSettingsSchema: z<AttentionSettings> = z.object({
   titleFlash: z.boolean().default(true),
   onlyWhenHidden: z.boolean().default(true),
 })
+
+/** In-memory defaults used while the Host settings scope is still loading. */
+export const DEFAULT_ATTENTION_SETTINGS: AttentionSettings = {
+  enabled: true,
+  sound: true,
+  titleFlash: true,
+  onlyWhenHidden: true,
+}

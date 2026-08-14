@@ -1,0 +1,52 @@
+/** `attention` namespace dictionaries (row copy + notification copy). */
+
+/** Simplified Chinese dictionary (the key-set source of truth). */
+export const zh = {
+  'row.title': '通知与提醒',
+  'row.enabled': '通知',
+  'row.enabled.hint': '需要你操作时弹出浏览器通知',
+  'row.sound': '提示音',
+  'row.sound.hint': '需要你操作时播放提示音',
+  'row.titleFlash': '标题闪烁',
+  'row.titleFlash.hint': '后台标签页标题闪烁提醒',
+  'row.onlyWhenHidden': '仅后台提醒',
+  'row.onlyWhenHidden.hint': '页面可见时不打扰',
+  'row.test': '发送测试通知',
+  'row.permissionHint': '点击测试按钮以启用浏览器通知',
+  'row.permissionDenied': '浏览器通知被拒绝，仅声音与标题提醒',
+  'notify.title.question': 'DSH：需要你回答一个问题',
+  'notify.body.question': '打开页面查看并回答',
+  'notify.title.planReview': 'DSH：有份计划等待你批准',
+  'notify.body.planReview': '打开页面查看计划并决定',
+  'notify.title.approval': 'DSH：有操作请求等待你批准',
+  'notify.body.approval': '打开页面处理请求',
+  'test.title': 'DSH 通知测试',
+  'test.body': '一切正常，需要你操作时你会收到提醒',
+} satisfies Record<string, string>
+
+/** The attention namespace key union. */
+export type AttentionKey = keyof typeof zh
+
+/** English dictionary, checked complete against the zh key set. */
+export const en = {
+  'row.title': 'Notifications',
+  'row.enabled': 'Notifications',
+  'row.enabled.hint': 'Pop a browser notification when the agent needs you',
+  'row.sound': 'Sound',
+  'row.sound.hint': 'Play a beep when the agent needs you',
+  'row.titleFlash': 'Title flash',
+  'row.titleFlash.hint': 'Flash the tab title while the page is in the background',
+  'row.onlyWhenHidden': 'Background only',
+  'row.onlyWhenHidden.hint': 'Stay quiet while the page is visible',
+  'row.test': 'Send test notification',
+  'row.permissionHint': 'Click the test button to enable browser notifications',
+  'row.permissionDenied': 'Browser notifications are denied; sound and title only',
+  'notify.title.question': 'DSH: a question needs your answer',
+  'notify.body.question': 'Open the page to read and answer it',
+  'notify.title.planReview': 'DSH: a plan is waiting for your approval',
+  'notify.body.planReview': 'Open the page to review and decide',
+  'notify.title.approval': 'DSH: an action is waiting for your approval',
+  'notify.body.approval': 'Open the page to handle the request',
+  'test.title': 'DSH notification test',
+  'test.body': 'All good — you will be alerted when your input is needed',
+} satisfies Record<AttentionKey, string>

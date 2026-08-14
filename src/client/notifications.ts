@@ -117,6 +117,26 @@ export class AttentionNotifier {
   async requestPermission(): Promise<NotificationPermission> {
     return this.env.requestPermission()
   }
+
+  /**
+   * Show an unregistered one-shot notification (the settings-row test button).
+   * @param copy - title/body to show.
+   * @param tag - notification tag.
+   * @returns whether the platform accepted it.
+   */
+  showCustom(copy: NotificationCopy, tag: string): boolean {
+    if (this.env.permission !== 'granted') return false
+    const notification = this.env.create(copy.title, { body: copy.body, tag })
+    notification.onclick = () => {
+      try {
+        notification.close()
+      } catch {
+        // Already closed by the platform.
+      }
+      this.env.focusWindow()
+    }
+    return true
+  }
 }
 
 /**
