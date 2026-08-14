@@ -1,14 +1,20 @@
 # dsh-ui-attention
 
-仓库地址：https://github.com/LeeKai233/dsh-ui-attention
+仓库地址：https://github.com/LeeKai233/dsh-ui-attention — npm：https://www.npmjs.com/package/dsh-ui-attention
 
-DeepSeek Harness (DSH) Web UI 的操作提醒插件：当 agent 需要你处理——
-`ask_user_question` 提问、等待批准的计划、工具/命令审批——而页面被隐藏或在后台时，
-插件会触发：
+![npm version](https://img.shields.io/npm/v/dsh-ui-attention) ![license](https://img.shields.io/npm/l/dsh-ui-attention)
+
+DeepSeek Harness (DSH) Web UI 的操作提醒插件：只要 DSH 页面**不在最顶层**——标签页
+隐藏、窗口最小化、或被其它应用盖住（document.hidden 或 !document.hasFocus()）——
+一旦有事发生，插件就会触发：
 
 1. **浏览器系统通知**（点击即可聚焦窗口并打开对应会话）；
 2. 一段短 **WebAudio 提示音**（无需任何音频文件）；
-3. 页面保持隐藏期间**标签页标题闪烁**（`(!) ` 前缀交替）。
+3. 有待处理交互时**标签页标题闪烁**（`(!) ` 前缀交替）。
+
+提醒覆盖两类事件：待处理交互（`ask_user_question` 提问、等待批准的计划、工具/命令
+审批）与**回合完成**（任意会话回合结束），每个回合各提醒一次，正文带会话标题。页面
+处于最顶层且聚焦时完全静默。
 
 它是双面 DSH 插件（`dsh.client`，platform `web`），同时以迷你 bundle 形式发布：
 安装即自动进入组合，无需手改任何 DSH 内部文件。
@@ -83,12 +89,14 @@ WEB_SETTINGS_NAMESPACES），其余命名空间一律返回 settings-not-exposed
 
 - **没有弹窗？** 在浏览器站点设置里允许通知，然后点一次测试按钮。权限被拒时自动降级
   为声音 + 标题提醒。
+- **页面被其它应用盖住但不提醒？** 插件把「处于最顶层且聚焦」视为「你正在看着它」。
+  关掉「仅后台提醒」开关即可在顶层时也提醒。
 - **没有声音？** 浏览器自动播放策略要求先有一次用户手势；插件在首次点击/按键时解锁
   AudioContext，失败会在后续手势中重试。
 - **开了多个标签页？** 每个标签页各自提醒（跨标签页无法去重），建议只保留一个 DSH
   标签页。
 - **哪些事件会提醒？** 提问（`ask_user_question`）、计划审批（`plan-review` 意图）、
-  以及工具/命令审批（`approval/requested`）。
+  工具/命令审批（`approval/requested`）以及回合完成（任意会话 running 翻转）。
 
 ## 环境要求
 
@@ -99,10 +107,12 @@ WEB_SETTINGS_NAMESPACES），其余命名空间一律返回 settings-not-exposed
 
 ## 发布
 
+已发布到 npm（包名 `dsh-ui-attention`，MIT）。后续版本：
+
 ```sh
-npm login
+npm version patch          # 或 minor / major
 pnpm bundle && pnpm test
-npm publish
+npm publish                # 账号开启 2FA 时加 --otp=<验证码>
 ```
 
 发布包自带已构建的 lib/ 与 bundle 补丁，使用者无需任何构建步骤。
@@ -111,15 +121,16 @@ npm publish
 
 ```sh
 pnpm install
-pnpm test        # vitest：T1-T13 TDD 套件 + 构建产物冒烟
+pnpm test        # vitest：T1-T17 TDD 套件 + 构建产物冒烟
 pnpm bundle      # tsdown -> lib/index.js（宿主）+ lib/client.js（浏览器）
 ```
 
-架构：`attention-engine.ts` 是对会话列表 `pendingInteraction` 状态的纯状态机（基线
-播种、按 会话×状态 只提醒一次、仅后台门控）；`notifications.ts`、`beep.ts`、
-`title-flash.ts` 是可注入的平台接线；`client/index.ts` 基于 `ctx.sessions.list`、
-`ctx.settingsScope` 与 `settings.general.item` 槽位完成装配。宿主 node 侧注册
-`ui-attention` 设置命名空间。
+架构：`attention-engine.ts` 是对会话列表的纯状态机（待处理交互状态 + running 边沿的
+回合完成检测、基线播种、按回合去重、页面不在最顶层门控）；`notifications.ts`、
+`beep.ts`、`title-flash.ts` 是可注入的平台接线；`client/index.ts` 基于
+`ctx.sessions.list` 与 `settings.general.item` 槽位完成装配，开关经运行时快照存储
+引擎持久化到 localStorage。宿主 node 侧注册 `ui-attention` 设置命名空间以备将来
+兼容。
 
 ## 卸载
 

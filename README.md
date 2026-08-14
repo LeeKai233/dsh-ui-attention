@@ -1,14 +1,22 @@
 # dsh-ui-attention
 
-Repository: https://github.com/LeeKai233/dsh-ui-attention
+Repository: https://github.com/LeeKai233/dsh-ui-attention — npm: https://www.npmjs.com/package/dsh-ui-attention
 
-Browser attention alerts for the DeepSeek Harness (DSH) web UI: when an agent
-needs you — an `ask_user_question` question, a plan waiting for approval, or a
-tool approval — and the page is hidden or in the background, this plugin fires:
+![npm version](https://img.shields.io/npm/v/dsh-ui-attention) ![license](https://img.shields.io/npm/l/dsh-ui-attention)
+
+Browser attention alerts for the DeepSeek Harness (DSH) web UI. Whenever the
+DSH page is **not on top** — the tab is hidden, the window is minimized, or
+another application covers it (document.hidden or !document.hasFocus()) — and
+something happens, this plugin fires:
 
 1. a **browser notification** (click it to focus the window and open the session),
 2. a short **WebAudio beep** (no audio asset needed),
-3. a **tab-title flash** (`(!) ` prefix alternating) while the page stays hidden.
+3. a **tab-title flash** (`(!) ` prefix alternating) while pending work awaits.
+
+It alerts on two event kinds: pending interactions (an `ask_user_question`
+question, a plan waiting for approval, or a tool approval) and **finished
+turns** (any session's turn ending), each once per turn with the session title
+in the body. While the page is on top and focused, everything stays quiet.
 
 It is a dual-face DSH plugin (`dsh.client`, platform `web`) shipped as a tiny
 bundle: installing it composes it automatically.
@@ -92,12 +100,16 @@ section lights up automatically once that upstream limitation is lifted.
 
 - **No popup?** Allow notifications for the site in your browser, then click
   the test button once. Denied permission degrades to sound + title.
+- **Page covered by another app but no alert?** The plugin treats "on top and
+  focused" as "you are looking at it". Turn off **Background only** to alert
+  even when the page is on top.
 - **No sound?** Audio playback needs one prior user gesture (autoplay policy);
   the plugin unlocks on the first click/keypress and retries on later gestures.
 - **Several tabs open?** Each tab alerts on its own (cross-tab dedupe is not
   possible); keep one DSH tab pinned.
 - **Which events alert?** Questions (`ask_user_question`), plan approvals
-  (`plan-review` intent), and tool/command approvals (`approval/requested`).
+  (`plan-review` intent), tool/command approvals (`approval/requested`), and
+  finished turns (any session's running flip).
 
 ## Requirements
 
@@ -109,10 +121,12 @@ section lights up automatically once that upstream limitation is lifted.
 
 ## Publishing
 
+Published on npm as `dsh-ui-attention` (MIT). Future versions:
+
 ```sh
-npm login
+npm version patch          # or minor / major
 pnpm bundle && pnpm test
-npm publish
+npm publish                # --otp=<code> when the account enforces 2FA
 ```
 
 The tarball ships the prebuilt lib/ plus the bundle patch, so consumers never
@@ -122,17 +136,18 @@ need a build step.
 
 ```sh
 pnpm install
-pnpm test        # vitest, TDD suite (T1-T13) + artifact smoke
+pnpm test        # vitest, TDD suite (T1-T17) + built-artifact smoke
 pnpm bundle      # tsdown -> lib/index.js (host) + lib/client.js (browser)
 ```
 
 Architecture: `attention-engine.ts` is a pure state machine over the session
-list's `pendingInteraction` statuses (baseline seeding, once-per-session-status
-alerting, hidden-only gating); `notifications.ts`, `beep.ts`, and
-`title-flash.ts` are the injectable platform wires; `client/index.ts` assembles
-them over `ctx.sessions.list`, `ctx.settingsScope`, and the
-`settings.general.item` slot. The Host node half registers the `ui-attention`
-settings namespace.
+list (pending-interaction statuses plus running-edge turn-finished detection,
+baseline seeding, per-turn dedupe, page-not-on-top gating); `notifications.ts`,
+`beep.ts`, and `title-flash.ts` are the injectable platform wires;
+`client/index.ts` assembles them over `ctx.sessions.list` and the
+`settings.general.item` slot, persisting the switches in localStorage via the
+runtime snapshot-store engine. The Host node half registers the
+`ui-attention` settings namespace for future compatibility.
 
 ## Uninstall
 
