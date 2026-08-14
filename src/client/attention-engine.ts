@@ -59,3 +59,85 @@ export function diffPending(
   }
   return { added, changed, cleared }
 }
+
+/** Side effects the plugin layer executes for one machine step. */
+export type AttentionAction =
+  | { kind: 'alert'; sessionId: string; status: PendingStatus }
+  | { kind: 'dismiss'; sessionId: string }
+  | { kind: 'flash-start' }
+  | { kind: 'flash-stop' }
+
+/** Alert-policy settings slice the machine reads. */
+export interface AttentionSettingsLike {
+  /** Master switch; every alert stays quiet when false. */
+  enabled: boolean
+  /** Whether the tab-title flash is allowed at all. */
+  titleFlash: boolean
+  /** Alert only when the page is not visible. */
+  onlyWhenHidden: boolean
+}
+
+/** Machine memory carried between steps. */
+export interface AttentionMachineState {
+  /** Whether the first (baseline) snapshot has been consumed. */
+  seeded: boolean
+  /** The pending map the machine last saw. */
+  pending: Map<string, PendingStatus>
+  /** Last status already alerted per session (seed fills it; gated steps leave it stale). */
+  alerted: Map<string, PendingStatus>
+  /** Whether the title flash is currently armed. */
+  flashing: boolean
+}
+
+/** A fresh machine with no baseline. */
+export function initialState(): AttentionMachineState {
+  return { seeded: false, pending: new Map(), alerted: new Map(), flashing: false }
+}
+
+/**
+ * Advance the machine one snapshot: seed the baseline on the first call
+ * (replay/refresh must not re-alert), then emit one alert per session whose
+ * pending status was never alerted at its current value, dismiss alerts for
+ * sessions whose pending resolved, and arm/disarm the title flash.
+ *
+ * Alerting scans the whole pending set rather than the diff, so a transition
+ * suppressed while the page was visible alerts once the page hides.
+ *
+ * @param state - previous machine state.
+ * @param snapshot - current session-list snapshot.
+ * @param settings - alert-policy settings.
+ * @param visibilityState - document.visibilityState ('visible' or otherwise).
+ * @returns the next state plus the side-effect actions to execute in order.
+ */
+export function step(
+  state: AttentionMachineState,
+  snapshot: SessionListLike,
+  settings: AttentionSettingsLike,
+  visibilityState: string,
+): { state: AttentionMachineState; actions: AttentionAction[] } {
+  const next = pendingOf(snapshot)
+  const actions: AttentionAction[] = []
+  const alerted = new Map(state.alerted)
+  if (state.seeded) {
+    const diff = diffPending(state.pending, next)
+    for (const id of diff.cleared) {
+      if (alerted.delete(id)) actions.push({ kind: 'dismiss', sessionId: id })
+    }
+    for (const [id, status] of next) {
+      if (alerted.get(id) !== status) {
+        alerted.set(id, status)
+        actions.push({ kind: 'alert', sessionId: id, status })
+      }
+    }
+  } else {
+    // Baseline seed: mark everything as already alerted, alert nothing.
+    for (const [id, status] of next) alerted.set(id, status)
+  }
+  const flashing = next.size > 0 && settings.titleFlash && visibilityState !== 'visible'
+  if (flashing && !state.flashing) actions.push({ kind: 'flash-start' })
+  else if (!flashing && state.flashing) actions.push({ kind: 'flash-stop' })
+  return {
+    state: { seeded: true, pending: next, alerted, flashing },
+    actions,
+  }
+}
