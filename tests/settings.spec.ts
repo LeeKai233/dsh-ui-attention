@@ -1,8 +1,7 @@
 /** T1: the ui-attention settings contract — namespace, schema defaults, narrowing. */
 import { describe, expect, it } from 'vitest'
-import {
-  ATTENTION_SETTINGS_NAMESPACE, AttentionSettingsSchema,
-} from '../src/attention-settings.ts'
+import { ATTENTION_SETTINGS_NAMESPACE } from '../src/attention-settings.ts'
+import { AttentionSettingsSchema } from '../src/attention-schema.ts'
 import type { AttentionSettings } from '../src/attention-settings.ts'
 
 describe('attention-settings contract', () => {

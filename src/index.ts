@@ -6,10 +6,12 @@
  */
 import type { Context } from '@deepseek-ai/cordis'
 import { settingsNamespace } from '@deepseek-ai/dsh-settings'
-import { ATTENTION_SETTINGS_NAMESPACE, AttentionSettingsSchema } from './attention-settings.ts'
+import { ATTENTION_SETTINGS_NAMESPACE } from './attention-settings.ts'
+import { AttentionSettingsSchema } from './attention-schema.ts'
 
-export { ATTENTION_SETTINGS_NAMESPACE, AttentionSettingsSchema } from './attention-settings.ts'
+export { ATTENTION_SETTINGS_NAMESPACE, DEFAULT_ATTENTION_SETTINGS } from './attention-settings.ts'
 export type { AttentionSettings } from './attention-settings.ts'
+export { AttentionSettingsSchema } from './attention-schema.ts'
 
 /** Required services: none — the settings registration is conditional. */
 export const inject: string[] = []

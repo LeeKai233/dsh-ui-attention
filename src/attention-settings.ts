@@ -1,8 +1,8 @@
 /**
- * Durable attention-alert settings shared by the Host schema registration
- * and the browser settings scope (ui-theme's theme-settings.ts precedent).
+ * Durable attention-alert settings contract shared by the Host node half and
+ * the browser half. Deliberately schema-free: the schemastery schema lives in
+ * attention-schema.ts so the browser bundle never drags the schema library in.
  */
-import z from '@deepseek-ai/schemastery'
 
 /** Settings namespace owned by the dsh-ui-attention plugin. */
 export const ATTENTION_SETTINGS_NAMESPACE = 'ui-attention'
@@ -18,14 +18,6 @@ export interface AttentionSettings {
   /** Alert only when the page is not visible; false alerts even in the foreground. */
   onlyWhenHidden: boolean
 }
-
-/** Durable settings schema; also the wire envelope the browser scope validates against. */
-export const AttentionSettingsSchema: z<AttentionSettings> = z.object({
-  enabled: z.boolean().default(true),
-  sound: z.boolean().default(true),
-  titleFlash: z.boolean().default(true),
-  onlyWhenHidden: z.boolean().default(true),
-})
 
 /** In-memory defaults used while the Host settings scope is still loading. */
 export const DEFAULT_ATTENTION_SETTINGS: AttentionSettings = {

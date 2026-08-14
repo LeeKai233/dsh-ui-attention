@@ -1,7 +1,8 @@
 /** T10: node half — settings namespace registration with and without the service. */
 import { describe, expect, it, vi } from 'vitest'
 import { apply, inject } from '../src/index.ts'
-import { ATTENTION_SETTINGS_NAMESPACE, AttentionSettingsSchema } from '../src/attention-settings.ts'
+import { ATTENTION_SETTINGS_NAMESPACE } from '../src/attention-settings.ts'
+import { AttentionSettingsSchema } from '../src/attention-schema.ts'
 
 interface FakeSettingsCtx {
   settings: { register: ReturnType<typeof vi.fn> }
