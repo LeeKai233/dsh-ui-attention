@@ -26,13 +26,18 @@ dsh plugin --profile web add file:/path/to/dsh-ui-attention
 ```
 
 Adding the row to the profile patch layer instead
-(`~/.dsh/profiles/web/cordis.patch.yml`) hot-reloads it without a restart:
+(`~/.dsh/profiles/web/cordis.patch.yml`) hot-loads the browser plugin into a
+running server without a restart:
 
 ```yaml
 - insert:
     - id: ui-attention
       name: "dsh-ui-attention"
 ```
+
+Note: the Host half of the plugin (the `ui-attention` settings namespace
+registration) activates on the next server start, so restart `dsh web` once
+for the settings switches to persist.
 
 ## Usage
 

@@ -34,6 +34,9 @@ dsh plugin --profile web add file:/path/to/dsh-ui-attention
       name: "dsh-ui-attention"
 ```
 
+注意：插件的宿主侧（`ui-attention` 设置命名空间注册）会在下次启动时生效，
+因此仍建议重启一次 `dsh web`，设置开关才能持久化。
+
 ## 使用
 
 - 打开 Web UI 的 **General 设置**：**通知与提醒** 行提供 4 个开关（通知 / 提示音 /
