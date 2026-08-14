@@ -90,6 +90,25 @@ section lights up automatically once that upstream limitation is lifted.
 - **Which events alert?** Questions (`ask_user_question`), plan approvals
   (`plan-review` intent), and tool/command approvals (`approval/requested`).
 
+## Requirements
+
+- DeepSeek Harness 0.1.0-rc.6 or newer (the plugin reads the session list's
+  pendingInteraction statuses and the settings.general.item slot)
+- the web profile (`dsh --profile web`)
+- a browser with notifications allowed for the DSH origin (click the test
+  button once to grant permission)
+
+## Publishing
+
+```sh
+npm login
+pnpm bundle && pnpm test
+npm publish
+```
+
+The tarball ships the prebuilt lib/ plus the bundle patch, so consumers never
+need a build step.
+
 ## Development
 
 ```sh

@@ -82,6 +82,23 @@ WEB_SETTINGS_NAMESPACES），其余命名空间一律返回 settings-not-exposed
 - **哪些事件会提醒？** 提问（`ask_user_question`）、计划审批（`plan-review` 意图）、
   以及工具/命令审批（`approval/requested`）。
 
+## 环境要求
+
+- DeepSeek Harness 0.1.0-rc.6 或更新（插件读取会话列表的 pendingInteraction 状态与
+  settings.general.item 槽位）
+- web profile（dsh --profile web）
+- 浏览器允许 DSH 站点的通知（点一次测试按钮授权即可）
+
+## 发布
+
+```sh
+npm login
+pnpm bundle && pnpm test
+npm publish
+```
+
+发布包自带已构建的 lib/ 与 bundle 补丁，使用者无需任何构建步骤。
+
 ## 开发
 
 ```sh
