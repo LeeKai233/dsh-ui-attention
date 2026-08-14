@@ -4,6 +4,7 @@
  * settings.general.item slot (feature-owned settings surface, ui-theme's
  * AppearanceRow precedent).
  */
+import type { CSSProperties } from 'react'
 import type { PropsLocale, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
 import { defineStore, type EngineStoreHandle } from '@deepseek-ai/dsh-client-runtime/client'
 import { DEFAULT_ATTENTION_SETTINGS } from '../attention-settings.ts'
@@ -56,11 +57,65 @@ export type AttentionRowComponentProps =
   PropsRuntime<'settings.general.item'> & PropsStore<ReturnType<typeof createAttentionRowStore>>
   & PropsLocale<'attention'> & AttentionRowInjected
 
+const TITLE_STYLE: CSSProperties = { fontWeight: 600 }
+const GROUP_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4 }
+const SWITCH_ROW_STYLE: CSSProperties = { display: 'flex', alignItems: 'center', gap: 12 }
+const SWITCH_LABEL_STYLE: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8 }
+const HINT_STYLE: CSSProperties = {
+  color: 'var(--dsw-alias-label-secondary, #8a8f98)', fontSize: 12,
+}
+const BUTTON_STYLE: CSSProperties = { marginTop: 8, alignSelf: 'flex-start' }
+
+interface SwitchRowProps {
+  label: string
+  hint: string
+  checked: boolean
+  onChange(checked: boolean): void
+}
+
+/** One checkbox switch: the label text names the input, the hint rides beside it. */
+function SwitchRow({ label, hint, checked, onChange }: SwitchRowProps) {
+  return (
+    <div style={SWITCH_ROW_STYLE}>
+      <label style={SWITCH_LABEL_STYLE}>
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={event => { onChange(event.target.checked) }}
+        />
+        <span>{label}</span>
+      </label>
+      <span style={HINT_STYLE}>{hint}</span>
+    </div>
+  )
+}
+
 /**
- * Render the Attention row (T11 registration face; T12 fills the UI).
- * @param _props - composed slot props.
- * @returns the row element tree (null until T12).
+ * Render the Attention row: title, four switches, the test button, and the
+ * permission hint state.
+ * @param props - composed slot props (runtime + store + locale + injected verbs).
+ * @returns the row element tree.
  */
-export function AttentionRow(_props: AttentionRowComponentProps): null {
-  return null
+export function AttentionRow(props: AttentionRowComponentProps) {
+  const { t, useStore, setEnabled, setSound, setTitleFlash, setOnlyWhenHidden, test } = props
+  const settings = useStore(s => s.settings)
+  const permission = useStore(s => s.permission)
+  return (
+    <div style={GROUP_STYLE}>
+      <div style={TITLE_STYLE}>{t('row.title')}</div>
+      <SwitchRow label={t('row.enabled')} hint={t('row.enabled.hint')} checked={settings.enabled} onChange={setEnabled} />
+      <SwitchRow label={t('row.sound')} hint={t('row.sound.hint')} checked={settings.sound} onChange={setSound} />
+      <SwitchRow label={t('row.titleFlash')} hint={t('row.titleFlash.hint')} checked={settings.titleFlash} onChange={setTitleFlash} />
+      <SwitchRow
+        label={t('row.onlyWhenHidden')}
+        hint={t('row.onlyWhenHidden.hint')}
+        checked={settings.onlyWhenHidden}
+        onChange={setOnlyWhenHidden}
+      />
+      <button type="button" style={BUTTON_STYLE} onClick={() => { void test() }}>{t('row.test')}</button>
+      {permission === 'default' && <div role="status">{t('row.permissionHint')}</div>}
+      {(permission === 'denied' || permission === 'unavailable')
+        && <div role="status">{t('row.permissionDenied')}</div>}
+    </div>
+  )
 }
