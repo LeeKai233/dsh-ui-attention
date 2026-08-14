@@ -11,7 +11,7 @@ import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import { initialState, step } from './attention-engine.ts'
-import type { AttentionMachineState, PendingStatus, SessionListLike } from './attention-engine.ts'
+import type { AttentionMachineState, PendingStatus, SessionListLike, SessionRowLike } from './attention-engine.ts'
 import { AttentionNotifier, browserNotificationEnv } from './notifications.ts'
 import type { NotificationCopy, NotificationEnv } from './notifications.ts'
 import { Beeper, browserAudioContextFactory } from './beep.ts'
@@ -39,6 +39,12 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 /** Required services: slot registry, locale, sessions. */
 export const inject = ['slots', 'locale', 'sessions']
 
+/** Whether the DSH page is not on top: hidden tab or an unfocused window. */
+export function needsAttention(): boolean {
+  return typeof document !== 'undefined'
+    && (document.hidden || document.visibilityState !== 'visible' || !document.hasFocus())
+}
+
 /**
  * Assemble the browser plugin.
  * @param ctx - client cordis context.
@@ -49,14 +55,17 @@ export function apply(ctx: ClientContext): void {
   const settings = createSettingsStore().create()
   const t = ctx.locale.bind(NS)
 
-  const copyFor = (status: PendingStatus): NotificationCopy => {
+  const titleOf = (row: SessionRowLike | undefined, sessionId: string): string =>
+    typeof row?.displayTitle === 'string' && row.displayTitle !== '' ? row.displayTitle : sessionId
+
+  const copyFor = (status: PendingStatus, title: string): NotificationCopy => {
     switch (status) {
       case 'question':
-        return { title: t('notify.title.question'), body: t('notify.body.question') }
+        return { title: t('notify.title.question'), body: t('notify.body.question', { title }) }
       case 'plan-review':
-        return { title: t('notify.title.planReview'), body: t('notify.body.planReview') }
+        return { title: t('notify.title.planReview'), body: t('notify.body.planReview', { title }) }
       default:
-        return { title: t('notify.title.approval'), body: t('notify.body.approval') }
+        return { title: t('notify.title.approval'), body: t('notify.body.approval', { title }) }
     }
   }
 
@@ -87,14 +96,25 @@ export function apply(ctx: ClientContext): void {
   const runStep = (): void => {
     const snapshot = ctx.sessions.list.getSnapshot() as unknown as SessionListLike
     const current = settings.getSnapshot()
-    const { state, actions } = step(machine, snapshot, current, document.visibilityState)
+    const { state, actions } = step(machine, snapshot, current, needsAttention())
     machine = state
     for (const action of actions) {
       switch (action.kind) {
-        case 'alert':
-          notifier.show(action.sessionId, action.status)
+        case 'alert': {
+          const title = titleOf(snapshot.byId[action.sessionId], action.sessionId)
+          notifier.showWithCopy(action.sessionId, action.status, copyFor(action.status, title))
           if (current.sound) beeper.beep()
           break
+        }
+        case 'done': {
+          const title = titleOf(snapshot.byId[action.sessionId], action.sessionId)
+          notifier.showDone(action.sessionId, {
+            title: t('notify.done.title'),
+            body: t('notify.done.body', { title }),
+          })
+          if (current.sound) beeper.beep()
+          break
+        }
         case 'dismiss':
           notifier.dismiss(action.sessionId)
           break
@@ -119,8 +139,11 @@ export function apply(ctx: ClientContext): void {
   const unsubscribe = ctx.sessions.list.subscribe(runStep)
   ctx.effect(() => unsubscribe, 'ui-attention: sessions subscription')
 
-  // Visibility flips re-run the machine (suppressed alerts fire on hide).
+  // Not-on-top signal: hidden tab, lost window focus, or re-focus all re-run
+  // the machine (suppressed alerts fire once the page leaves the top).
   document.addEventListener('visibilitychange', runStep)
+  window.addEventListener('blur', runStep)
+  window.addEventListener('focus', runStep)
 
   // Unlock WebAudio from any user gesture (autoplay policy retry).
   document.addEventListener('pointerdown', () => { beeper.unlock() }, { capture: true })
@@ -155,6 +178,7 @@ export function apply(ctx: ClientContext): void {
         setSound: (value) => { settings.actions.setSound(value) },
         setTitleFlash: (value) => { settings.actions.setTitleFlash(value) },
         setOnlyWhenHidden: (value) => { settings.actions.setOnlyWhenHidden(value) },
+        setNotifyOnDone: (value) => { settings.actions.setNotifyOnDone(value) },
         test: () => testNotification(),
       }
     },

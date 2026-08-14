@@ -69,6 +69,40 @@ export class AttentionNotifier {
    * @param status - pending status choosing the copy.
    */
   show(sessionId: string, status: PendingStatus): boolean {
+    return this.showWith(sessionId, this.copy(status))
+  }
+
+  /**
+   * Show an alert with an explicit copy (the wire layer composes the session
+   * title into the body), still registered per session.
+   * @param sessionId - owning session.
+   * @param _status - pending status (kept for symmetry; the copy already encodes it).
+   * @param copy - localized title/body.
+   * @returns whether the platform accepted it.
+   */
+  showWithCopy(sessionId: string, _status: PendingStatus, copy: NotificationCopy): boolean {
+    return this.showWith(sessionId, copy)
+  }
+
+  /**
+   * Show a done alert for one session with the provided copy; registered,
+   * dismissed, and click-opened exactly like a pending alert.
+   * @param sessionId - owning session.
+   * @param copy - localized title/body.
+   * @returns whether the platform accepted it.
+   */
+  showDone(sessionId: string, copy: NotificationCopy): boolean {
+    return this.showWith(sessionId, copy)
+  }
+
+  /**
+   * Shared show path: replace any live notification for the session with a
+   * new one carrying the given copy; construction failures degrade to false.
+   * @param sessionId - owning session.
+   * @param copy - title/body to show.
+   * @returns whether the platform accepted it.
+   */
+  private showWith(sessionId: string, copy: NotificationCopy): boolean {
     if (this.env.permission !== 'granted') return false
     const previous = this.shown.get(sessionId)
     if (previous !== undefined) {
@@ -79,9 +113,12 @@ export class AttentionNotifier {
         // A stale handle failing to close is not an alert failure.
       }
     }
-    const { title, body } = this.copy(status)
-    const tag = 'dsh-attention:' + sessionId
-    const notification = this.env.create(title, { body, tag })
+    let notification: NotificationLike
+    try {
+      notification = this.env.create(copy.title, { body: copy.body, tag: 'dsh-attention:' + sessionId })
+    } catch {
+      return false
+    }
     notification.onclick = () => {
       this.shown.delete(sessionId)
       try {
@@ -126,7 +163,12 @@ export class AttentionNotifier {
    */
   showCustom(copy: NotificationCopy, tag: string): boolean {
     if (this.env.permission !== 'granted') return false
-    const notification = this.env.create(copy.title, { body: copy.body, tag })
+    let notification: NotificationLike
+    try {
+      notification = this.env.create(copy.title, { body: copy.body, tag })
+    } catch {
+      return false
+    }
     notification.onclick = () => {
       try {
         notification.close()

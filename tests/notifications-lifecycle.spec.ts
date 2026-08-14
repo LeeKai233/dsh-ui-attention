@@ -1,4 +1,4 @@
-/** T7: notification lifecycle — dismiss close, click open, per-session isolation. */
+/** T7+T16: notification lifecycle — dismiss close, click open, done copies, create-throw degradation. */
 import { describe, expect, it, vi } from 'vitest'
 import { AttentionNotifier } from '../src/client/notifications.ts'
 import type { NotificationLike, NotificationPermission } from '../src/client/notifications.ts'
@@ -36,7 +36,6 @@ describe('AttentionNotifier lifecycle', () => {
     notifier.dismiss('s1')
     expect(created[0]?.close).toHaveBeenCalledTimes(1)
     expect(created[1]?.close).not.toHaveBeenCalled()
-    // A later re-show of s1 works again (registry cleaned).
     notifier.show('s1', 'question')
     expect(created).toHaveLength(3)
   })
@@ -69,6 +68,35 @@ describe('AttentionNotifier lifecycle', () => {
     expect(e.focusWindow).toHaveBeenCalledTimes(1)
     expect(onOpen).toHaveBeenCalledWith('s1')
     expect(created[0]?.close).toHaveBeenCalledTimes(1)
+  })
+
+  it('showDone registers like a regular alert (tag, dismiss, click open)', () => {
+    const created: NotificationLike[] = []
+    const e = env(created)
+    const onOpen = vi.fn()
+    const notifier = new AttentionNotifier(e, s => COPY[s], onOpen)
+    expect(notifier.showDone('s1', { title: 'done-title', body: 'done-body' })).toBe(true)
+    expect(created[0]?.tag).toBe('dsh-attention:s1')
+    expect(created[0]?.title).toBe('done-title')
+    notifier.dismiss('s1')
+    expect(created[0]?.close).toHaveBeenCalledTimes(1)
+    notifier.showDone('s2', { title: 'd2', body: 'b2' })
+    created[1]?.onclick?.call(undefined, new Event('click'))
+    expect(onOpen).toHaveBeenCalledWith('s2')
+  })
+
+  it('degrades to false when notification construction throws', () => {
+    const throwing = {
+      permission: 'granted' as NotificationPermission,
+      requestPermission: vi.fn(async () => 'granted' as NotificationPermission),
+      create: vi.fn(() => { throw new Error('constructor blocked') }),
+      focusWindow: vi.fn(),
+    }
+    const notifier = new AttentionNotifier(throwing, s => COPY[s], () => {})
+    expect(() => notifier.show('s1', 'question')).not.toThrow()
+    expect(notifier.show('s1', 'question')).toBe(false)
+    expect(() => notifier.showDone('s1', { title: 't', body: 'b' })).not.toThrow()
+    expect(notifier.showDone('s1', { title: 't', body: 'b' })).toBe(false)
   })
 
   it('a close() throwing on a stale handle does not break dismiss', () => {

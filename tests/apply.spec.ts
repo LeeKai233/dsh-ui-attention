@@ -1,7 +1,7 @@
-/** T11: browser assembly — subscriptions, slot registration, dictionaries, engine wiring. */
+/** T11+T16: browser assembly — subscriptions, wiring, done alerts, focus/blur. */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { apply } from '../src/client/index.ts'
-import type { PendingStatus, SessionListLike } from '../src/client/attention-engine.ts'
+import type { PendingStatus, SessionListLike, SessionRowLike } from '../src/client/attention-engine.ts'
 import type { NotificationLike, NotificationPermission } from '../src/client/notifications.ts'
 
 interface FakeNotification extends NotificationLike {
@@ -31,7 +31,9 @@ class FakeNotificationCtor implements FakeNotification {
 }
 
 function snapshotOf(pending: Record<string, PendingStatus>): SessionListLike {
-  return { byId: Object.fromEntries(Object.entries(pending).map(([id, status]) => [id, { pendingInteraction: status }])) }
+  return {
+    byId: Object.fromEntries(Object.entries(pending).map(([id, status]) => [id, { pendingInteraction: status, displayTitle: 'Title-' + id }])),
+  }
 }
 
 interface RegistrationRecord {
@@ -51,6 +53,7 @@ function buildContext(listSnapshot: SessionListLike) {
   let listSubscriber: (() => void) | undefined
   const open = vi.fn()
   const registerLocale = vi.fn()
+  const t = vi.fn((key: string) => key)
   let registration: RegistrationRecord | undefined
   const slots = {
     inject: vi.fn((_key: string, reg: () => RegistrationRecord) => { registration = reg() }),
@@ -58,7 +61,7 @@ function buildContext(listSnapshot: SessionListLike) {
   }
   const locale = {
     register: registerLocale,
-    bind: vi.fn(() => (key: string) => key),
+    bind: vi.fn(() => t),
   }
   const ctx = {
     effect: vi.fn((fn: () => unknown) => { fn() }),
@@ -73,10 +76,14 @@ function buildContext(listSnapshot: SessionListLike) {
     },
   }
   return {
-    ctx, slots, locale, open,
+    ctx, slots, locale, open, t,
     listSnapshot: { set: (next: SessionListLike) => { snap = next } },
     notify: () => { listSubscriber?.() },
   }
+}
+
+function rows(byId: Record<string, SessionRowLike | undefined>): SessionListLike {
+  return { byId }
 }
 
 describe('client apply assembly', () => {
@@ -107,7 +114,7 @@ describe('client apply assembly', () => {
     expect(options.store).toBeDefined()
   })
 
-  it('alerts (hidden page) when a pending interaction appears, and closes on resolve', () => {
+  it('alerts (page not on top) when a pending interaction appears, and closes on resolve', () => {
     vi.stubGlobal('Notification', FakeNotificationCtor)
     Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
     const built = buildContext({ byId: {} })
@@ -117,9 +124,39 @@ describe('client apply assembly', () => {
     expect(created).toHaveLength(1)
     expect(created[0]?.tag).toBe('dsh-attention:s1')
     expect(created[0]?.title).toBe('notify.title.question')
+    // The pending copy carries the session title as a parameter.
+    expect(built.t).toHaveBeenCalledWith('notify.body.question', { title: 'Title-s1' })
     built.listSnapshot.set({ byId: {} })
     built.notify()
     expect(created[0]?.closed).toBe(true)
+  })
+
+  it('listens to window blur/focus for the not-on-top signal', () => {
+    vi.stubGlobal('Notification', FakeNotificationCtor)
+    const blurSpy = vi.spyOn(window, 'addEventListener')
+    apply(buildContext({ byId: {} }).ctx as never)
+    expect(blurSpy).toHaveBeenCalledWith('blur', expect.any(Function))
+    expect(blurSpy).toHaveBeenCalledWith('focus', expect.any(Function))
+    blurSpy.mockRestore()
+  })
+
+  it('emits a done notification when a session turn finishes while not on top', () => {
+    vi.stubGlobal('Notification', FakeNotificationCtor)
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+    const built = buildContext({ byId: {} })
+    apply(built.ctx as never)
+    built.listSnapshot.set(rows({ s1: { running: true, updatedAt: 1, displayTitle: 'My Session' } }))
+    built.notify()
+    expect(created).toHaveLength(0)
+    built.listSnapshot.set(rows({ s1: { running: false, updatedAt: 2, displayTitle: 'My Session' } }))
+    built.notify()
+    expect(created).toHaveLength(1)
+    expect(created[0]?.tag).toBe('dsh-attention:s1')
+    expect(created[0]?.title).toBe('notify.done.title')
+    expect(built.t).toHaveBeenCalledWith('notify.done.body', { title: 'My Session' })
+    // Clicking opens the session.
+    created[0]?.onclick?.call(undefined, new Event('click'))
+    expect(built.open).toHaveBeenCalledWith('s1')
   })
 
   it('row verbs write the persisted settings store and gate the engine', async () => {
@@ -131,15 +168,12 @@ describe('client apply assembly', () => {
     const verbs = options.inject({ sync: vi.fn(), syncPermission: vi.fn() })
     expect(verbs.setEnabled).toBeTypeOf('function')
     verbs.setEnabled(false)
-    // Master switch off: a pending appearing now stays silent.
     built.listSnapshot.set(snapshotOf({ s1: 'question' }))
     built.notify()
     expect(created).toHaveLength(0)
-    // Master switch on again: the pending alerts on the next step.
     verbs.setEnabled(true)
     built.notify()
     expect(created).toHaveLength(1)
-    // The test button fires a one-shot notification.
     await verbs.test()
     expect(created.some(n => n.tag === 'dsh-attention:test')).toBe(true)
   })
