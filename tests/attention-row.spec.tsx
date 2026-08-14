@@ -1,4 +1,4 @@
-/** T12: the General-settings row UI — switches, verbs, permission hints. */
+/** T12: the General-settings row UI — official Setting-Cell chrome, pills, verbs, hints. */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useEffect, useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -38,43 +38,44 @@ function verbs(): AttentionRowInjected {
 describe('AttentionRow', () => {
   afterEach(cleanup)
 
-  it('renders the title, four switches, and the test button', () => {
+  it('renders the title, four toggle pills, and the test pill', () => {
     const instance = createAttentionRowStore().create()
     render(<Harness instance={instance} injected={verbs()} />)
     expect(screen.getByText('row.title')).toBeTruthy()
-    expect(screen.getByLabelText('row.enabled')).toBeTruthy()
-    expect(screen.getByLabelText('row.sound')).toBeTruthy()
-    expect(screen.getByLabelText('row.titleFlash')).toBeTruthy()
-    expect(screen.getByLabelText('row.onlyWhenHidden')).toBeTruthy()
+    for (const name of ['row.enabled', 'row.sound', 'row.titleFlash', 'row.onlyWhenHidden']) {
+      expect(screen.getByRole('button', { name })).toBeTruthy()
+    }
     expect(screen.getByRole('button', { name: 'row.test' })).toBeTruthy()
   })
 
-  it('reflects the store state in every switch', () => {
+  it('reflects the store state in every pill (on/off label and pressed state)', () => {
     const instance = createAttentionRowStore().create()
     instance.actions.sync({ enabled: false, sound: true, titleFlash: false, onlyWhenHidden: true })
     instance.actions.syncPermission('granted')
     render(<Harness instance={instance} injected={verbs()} />)
-    expect((screen.getByLabelText('row.enabled') as HTMLInputElement).checked).toBe(false)
-    expect((screen.getByLabelText('row.titleFlash') as HTMLInputElement).checked).toBe(false)
-    expect((screen.getByLabelText('row.sound') as HTMLInputElement).checked).toBe(true)
-    expect((screen.getByLabelText('row.onlyWhenHidden') as HTMLInputElement).checked).toBe(true)
+    expect(screen.getByRole('button', { name: 'row.enabled' }).getAttribute('aria-pressed')).toBe('false')
+    expect(screen.getByRole('button', { name: 'row.enabled' }).textContent).toBe('row.off')
+    expect(screen.getByRole('button', { name: 'row.sound' }).getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole('button', { name: 'row.sound' }).textContent).toBe('row.on')
+    expect(screen.getByRole('button', { name: 'row.titleFlash' }).getAttribute('aria-pressed')).toBe('false')
+    expect(screen.getByRole('button', { name: 'row.onlyWhenHidden' }).getAttribute('aria-pressed')).toBe('true')
   })
 
-  it('forwards each switch flip to its injected verb', () => {
+  it('forwards each pill click to its injected verb with the opposite value', () => {
     const injected = verbs()
     const instance = createAttentionRowStore().create()
     render(<Harness instance={instance} injected={injected} />)
-    fireEvent.click(screen.getByLabelText('row.enabled'))
-    fireEvent.click(screen.getByLabelText('row.sound'))
-    fireEvent.click(screen.getByLabelText('row.titleFlash'))
-    fireEvent.click(screen.getByLabelText('row.onlyWhenHidden'))
+    fireEvent.click(screen.getByRole('button', { name: 'row.enabled' }))
+    fireEvent.click(screen.getByRole('button', { name: 'row.sound' }))
+    fireEvent.click(screen.getByRole('button', { name: 'row.titleFlash' }))
+    fireEvent.click(screen.getByRole('button', { name: 'row.onlyWhenHidden' }))
     expect(injected.setEnabled).toHaveBeenCalledWith(false)
     expect(injected.setSound).toHaveBeenCalledWith(false)
     expect(injected.setTitleFlash).toHaveBeenCalledWith(false)
     expect(injected.setOnlyWhenHidden).toHaveBeenCalledWith(false)
   })
 
-  it('runs the test flow from the button', () => {
+  it('runs the test flow from the test pill', () => {
     const injected = verbs()
     const instance = createAttentionRowStore().create()
     render(<Harness instance={instance} injected={injected} />)
@@ -103,11 +104,12 @@ describe('AttentionRow', () => {
     }
   })
 
-  it('shows no hint once permission is granted', () => {
+  it('shows the plain summary once permission is granted', () => {
     const instance = createAttentionRowStore().create()
     instance.actions.sync({ ...DEFAULT_ATTENTION_SETTINGS })
     instance.actions.syncPermission('granted')
     render(<Harness instance={instance} injected={verbs()} />)
+    expect(screen.getByText('row.summary')).toBeTruthy()
     expect(screen.queryByText('row.permissionHint')).toBeNull()
     expect(screen.queryByText('row.permissionDenied')).toBeNull()
   })
