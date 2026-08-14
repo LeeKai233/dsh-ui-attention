@@ -46,7 +46,7 @@ describe('built client bundle loader handoff', () => {
       return hit
     })
     expect(exports).toBeDefined()
-    expect(exports?.inject).toEqual(['slots', 'locale', 'settingsScope', 'sessions'])
+    expect(exports?.inject).toEqual(['slots', 'locale', 'sessions'])
     expect(typeof exports?.apply).toBe('function')
   })
 })

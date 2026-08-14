@@ -25,8 +25,14 @@ dsh web
 dsh plugin --profile web add file:/path/to/dsh-ui-attention
 ```
 
-如果只想热加载、不想重启：把下面这行插进 profile 补丁层
-`~/.dsh/profiles/web/cordis.patch.yml` 即可（长驻进程自动热重载）：
+然后重启一次 `dsh web`：bundle 层（以及注册 `ui-attention` 设置命名空间的插件
+宿主侧）在启动时生效。
+
+### 不经过 dsh plugin 的手工安装
+
+作为 bundle 路线的**替代方案**（二选一，绝不能同时用）：把包拷进
+`~/.dsh/profiles/web/node_modules/`，并把下面这行插进 profile 补丁层
+`~/.dsh/profiles/web/cordis.patch.yml`：
 
 ```yaml
 - insert:
@@ -34,8 +40,9 @@ dsh plugin --profile web add file:/path/to/dsh-ui-attention
       name: "dsh-ui-attention"
 ```
 
-注意：插件的宿主侧（`ui-attention` 设置命名空间注册）会在下次启动时生效，
-因此仍建议重启一次 `dsh web`，设置开关才能持久化。
+> **切勿两种方式同时使用。** `insert` 行不会跨层按 id 去重：bundle 补丁与
+> profile 补丁同时提供同一个 `id: ui-attention` 会让加载器拒绝启动，报错
+> `duplicate loader entry id: ui-attention`。两条组合路线只能选一条。
 
 ## 使用
 
@@ -48,14 +55,21 @@ dsh plugin --profile web add file:/path/to/dsh-ui-attention
 
 ## 设置项
 
-持久化在宿主人设置文档的 `ui-attention` 命名空间（默认全部开启）：
+4 个开关（默认全部开启）持久化在浏览器的 localStorage 键
+dsh-ui-attention.settings 中：
 
 | 字段 | 含义 |
 | --- | --- |
-| `enabled` | 总开关：关闭后弹窗、声音、标题闪烁全部静默 |
-| `sound` | 播放 WebAudio 提示音 |
-| `titleFlash` | 页面隐藏时标签页标题闪烁 |
-| `onlyWhenHidden` | 仅页面不可见时提醒；关闭后前台也会提醒 |
+| enabled | 总开关：关闭后弹窗、声音、标题闪烁全部静默 |
+| sound | 播放 WebAudio 提示音 |
+| titleFlash | 页面隐藏时标签页标题闪烁 |
+| onlyWhenHidden | 仅页面不可见时提醒；关闭后前台也会提醒 |
+
+为什么用浏览器本地存储而不是宿主人设置文档：rc.6 的 Web API 网关只向浏览器暴露
+一个硬编码的设置命名空间白名单（packages/host/apiproxy/src/api-proxy.ts 中的
+WEB_SETTINGS_NAMESPACES），其余命名空间一律返回 settings-not-exposed——
+「把暴露声明移到 settings.register()」在上游是已记录的延期工作。插件的宿主 node 侧
+仍然会在服务端注册 ui-attention 命名空间，等上游放开该限制后该 section 自动生效。
 
 ## 常见问题
 

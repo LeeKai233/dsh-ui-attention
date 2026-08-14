@@ -1,7 +1,6 @@
 /** T11: browser assembly — subscriptions, slot registration, dictionaries, engine wiring. */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { apply } from '../src/client/index.ts'
-import { DEFAULT_ATTENTION_SETTINGS } from '../src/attention-settings.ts'
 import type { PendingStatus, SessionListLike } from '../src/client/attention-engine.ts'
 import type { NotificationLike, NotificationPermission } from '../src/client/notifications.ts'
 
@@ -52,17 +51,6 @@ function buildContext(listSnapshot: SessionListLike) {
   let listSubscriber: (() => void) | undefined
   const open = vi.fn()
   const registerLocale = vi.fn()
-  const scope = {
-    getSnapshot: () => ({ status: 'ready' as const, value: DEFAULT_ATTENTION_SETTINGS, user: {}, base: {}, revision: 1 }),
-    subscribe: vi.fn(() => () => {}),
-    set: vi.fn(async () => {}),
-    unset: vi.fn(async () => {}),
-    load: vi.fn(async () => {}),
-  }
-  const bindScope = vi.fn((spec: { namespace: string }) => {
-    expect(spec.namespace).toBe('ui-attention')
-    return scope
-  })
   let registration: RegistrationRecord | undefined
   const slots = {
     inject: vi.fn((_key: string, reg: () => RegistrationRecord) => { registration = reg() }),
@@ -76,7 +64,6 @@ function buildContext(listSnapshot: SessionListLike) {
     effect: vi.fn((fn: () => unknown) => { fn() }),
     slots,
     locale,
-    settingsScope: { bind: bindScope },
     sessions: {
       list: {
         getSnapshot: () => snap,
@@ -85,7 +72,11 @@ function buildContext(listSnapshot: SessionListLike) {
       open,
     },
   }
-  return { ctx, slots, locale, scope, open, listSnapshot: { set: (next: SessionListLike) => { snap = next } } }
+  return {
+    ctx, slots, locale, open,
+    listSnapshot: { set: (next: SessionListLike) => { snap = next } },
+    notify: () => { listSubscriber?.() },
+  }
 }
 
 describe('client apply assembly', () => {
@@ -94,13 +85,11 @@ describe('client apply assembly', () => {
     vi.unstubAllGlobals()
   })
 
-  it('binds the settings scope, registers dictionaries, and subscribes the session list', () => {
+  it('registers dictionaries and subscribes the session list', () => {
     vi.stubGlobal('Notification', FakeNotificationCtor)
     const built = buildContext({ byId: {} })
     apply(built.ctx as never)
     expect(built.locale.register).toHaveBeenCalledWith('attention', expect.objectContaining({ zh: expect.any(Object), en: expect.any(Object) }))
-    expect(built.scope.set).toBeDefined()
-    // The sessions list subscription is wired.
     expect(built.ctx.sessions.list.subscribe).toHaveBeenCalledTimes(1)
   })
 
@@ -124,27 +113,33 @@ describe('client apply assembly', () => {
     const built = buildContext({ byId: {} })
     apply(built.ctx as never)
     built.listSnapshot.set(snapshotOf({ s1: 'question' }))
-    // The plugin subscribed; re-run through the captured subscription.
-    const subscriber = built.ctx.sessions.list.subscribe.mock.calls[0]?.[0] as () => void
-    subscriber()
+    built.notify()
     expect(created).toHaveLength(1)
     expect(created[0]?.tag).toBe('dsh-attention:s1')
     expect(created[0]?.title).toBe('notify.title.question')
-    // Resolution closes the notification.
     built.listSnapshot.set({ byId: {} })
-    subscriber()
+    built.notify()
     expect(created[0]?.closed).toBe(true)
   })
 
-  it('exposes row verbs that write fields and fire a test notification', async () => {
+  it('row verbs write the persisted settings store and gate the engine', async () => {
     vi.stubGlobal('Notification', FakeNotificationCtor)
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
     const built = buildContext({ byId: {} })
     apply(built.ctx as never)
     const options = built.slots.register.mock.calls[0]?.[0] as RegistrationRecord['options']
     const verbs = options.inject({ sync: vi.fn(), syncPermission: vi.fn() })
     expect(verbs.setEnabled).toBeTypeOf('function')
     verbs.setEnabled(false)
-    expect(built.scope.set).toHaveBeenCalledWith('enabled', false)
+    // Master switch off: a pending appearing now stays silent.
+    built.listSnapshot.set(snapshotOf({ s1: 'question' }))
+    built.notify()
+    expect(created).toHaveLength(0)
+    // Master switch on again: the pending alerts on the next step.
+    verbs.setEnabled(true)
+    built.notify()
+    expect(created).toHaveLength(1)
+    // The test button fires a one-shot notification.
     await verbs.test()
     expect(created.some(n => n.tag === 'dsh-attention:test')).toBe(true)
   })

@@ -25,9 +25,14 @@ Or from a local checkout:
 dsh plugin --profile web add file:/path/to/dsh-ui-attention
 ```
 
-Adding the row to the profile patch layer instead
-(`~/.dsh/profiles/web/cordis.patch.yml`) hot-loads the browser plugin into a
-running server without a restart:
+Then restart `dsh web` once: the bundle layer (and the plugin's Host half,
+which registers the `ui-attention` settings namespace) applies at boot.
+
+### Standalone install without `dsh plugin`
+
+As an ALTERNATIVE (not in addition!) to the bundle route, you can copy the
+package into `~/.dsh/profiles/web/node_modules/` and insert the row into the
+profile patch layer (`~/.dsh/profiles/web/cordis.patch.yml`):
 
 ```yaml
 - insert:
@@ -35,9 +40,11 @@ running server without a restart:
       name: "dsh-ui-attention"
 ```
 
-Note: the Host half of the plugin (the `ui-attention` settings namespace
-registration) activates on the next server start, so restart `dsh web` once
-for the settings switches to persist.
+> **Do not do both.** `insert` rows are not deduplicated by id across layers:
+> the same `id: ui-attention` coming from the bundle patch AND the profile
+> patch makes the loader refuse to boot with
+> `duplicate loader entry id: ui-attention`. Pick exactly one composition
+> route.
 
 ## Usage
 
@@ -54,15 +61,23 @@ for the settings switches to persist.
 
 ## Settings
 
-Stored in the Host user-settings document under the `ui-attention` namespace
-(all default `true`):
+The four switches (all default true) persist in the browser under the
+localStorage key dsh-ui-attention.settings:
 
 | Field | Meaning |
 | --- | --- |
-| `enabled` | Master switch: popup, sound, and title flash all stay quiet when false |
-| `sound` | Play the WebAudio beep |
-| `titleFlash` | Flash the tab title while the page is hidden |
-| `onlyWhenHidden` | Alert only when the page is not visible; false alerts in the foreground too |
+| enabled | Master switch: popup, sound, and title flash all stay quiet when false |
+| sound | Play the WebAudio beep |
+| titleFlash | Flash the tab title while the page is hidden |
+| onlyWhenHidden | Alert only when the page is not visible; false alerts in the foreground too |
+
+Why browser-local instead of the Host settings document: the rc.6 web API
+gateway only exposes a hardcoded allowlist of settings namespaces to the
+browser (WEB_SETTINGS_NAMESPACES in packages/host/apiproxy/src/api-proxy.ts)
+and answers settings-not-exposed for anything else — exposing third-party
+namespaces via settings.register() is documented as deferred work. The Host
+node half still registers the ui-attention namespace server-side so the
+section lights up automatically once that upstream limitation is lifted.
 
 ## FAQ
 
