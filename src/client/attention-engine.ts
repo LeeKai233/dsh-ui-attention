@@ -8,9 +8,18 @@
 /** Kind-discriminated pending status as the session list reports it. */
 export type PendingStatus = 'approval' | 'plan-review' | 'question'
 
+/** One session-list row as the engine reads it (ctx.sessions.list byId shape). */
+export interface SessionRowLike {
+  id?: string
+  pendingInteraction?: PendingStatus
+  running?: boolean
+  updatedAt?: number
+  origin?: string
+}
+
 /** Minimal session-list surface the engine reads (ctx.sessions.list snapshot shape). */
 export interface SessionListLike {
-  byId: Record<string, { id?: string; pendingInteraction?: PendingStatus } | undefined>
+  byId: Record<string, SessionRowLike | undefined>
 }
 
 /**
@@ -64,6 +73,7 @@ export function diffPending(
 export type AttentionAction =
   | { kind: 'alert'; sessionId: string; status: PendingStatus }
   | { kind: 'dismiss'; sessionId: string }
+  | { kind: 'done'; sessionId: string }
   | { kind: 'flash-start' }
   | { kind: 'flash-stop' }
 
@@ -73,8 +83,10 @@ export interface AttentionSettingsLike {
   enabled: boolean
   /** Whether the tab-title flash is allowed at all. */
   titleFlash: boolean
-  /** Alert only when the page is not visible. */
+  /** Alert only while the page is not on top (hidden or unfocused). */
   onlyWhenHidden: boolean
+  /** Alert when a session's turn finishes. */
+  notifyOnDone: boolean
 }
 
 /** Machine memory carried between steps. */
@@ -85,40 +97,65 @@ export interface AttentionMachineState {
   pending: Map<string, PendingStatus>
   /** Last status already alerted per session (seed fills it; gated steps leave it stale). */
   alerted: Map<string, PendingStatus>
+  /** Running flag the machine last saw, per session (done-edge detection). */
+  prevRunning: Map<string, boolean>
+  /** updatedAt already alerted as done, per session (one done per turn). */
+  doneAlerted: Map<string, number>
   /** Whether the title flash is currently armed. */
   flashing: boolean
 }
 
 /** A fresh machine with no baseline. */
 export function initialState(): AttentionMachineState {
-  return { seeded: false, pending: new Map(), alerted: new Map(), flashing: false }
+  return {
+    seeded: false, pending: new Map(), alerted: new Map(),
+    prevRunning: new Map(), doneAlerted: new Map(), flashing: false,
+  }
 }
 
 /**
  * Advance the machine one snapshot: seed the baseline on the first call
  * (replay/refresh must not re-alert), then emit one alert per session whose
  * pending status was never alerted at its current value, dismiss alerts for
- * sessions whose pending resolved, and arm/disarm the title flash.
+ * sessions whose pending resolved, emit a done alert for each session whose
+ * running flag flipped true -> false (non-subagent, one per turn), and
+ * arm/disarm the title flash.
  *
  * Alerting scans the whole pending set rather than the diff, so a transition
- * suppressed while the page was visible alerts once the page hides.
+ * suppressed while the page was on top alerts once the page leaves the top.
  *
  * @param state - previous machine state.
  * @param snapshot - current session-list snapshot.
  * @param settings - alert-policy settings.
- * @param visibilityState - document.visibilityState ('visible' or otherwise).
+ * @param needsAttention - whether the page is not on top (hidden or unfocused).
  * @returns the next state plus the side-effect actions to execute in order.
  */
 export function step(
   state: AttentionMachineState,
   snapshot: SessionListLike,
   settings: AttentionSettingsLike,
-  visibilityState: string,
+  needsAttention: boolean,
 ): { state: AttentionMachineState; actions: AttentionAction[] } {
   const next = pendingOf(snapshot)
   const actions: AttentionAction[] = []
   const alerted = new Map(state.alerted)
-  const gated = !settings.enabled || (settings.onlyWhenHidden && visibilityState === 'visible')
+  const prevRunning = new Map(state.prevRunning)
+  const doneAlerted = new Map(state.doneAlerted)
+  const gated = !settings.enabled || (settings.onlyWhenHidden && !needsAttention)
+  const doneAllowed = settings.enabled && settings.notifyOnDone
+    && (!settings.onlyWhenHidden || needsAttention)
+  for (const [id, row] of Object.entries(snapshot.byId)) {
+    if (row === undefined) continue
+    const wasRunning = prevRunning.get(id) === true
+    const isRunning = row.running === true
+    const updatedAt = row.updatedAt ?? 0
+    if (state.seeded && wasRunning && !isRunning && row.origin !== 'subagent'
+      && doneAllowed && doneAlerted.get(id) !== updatedAt) {
+      doneAlerted.set(id, updatedAt)
+      actions.push({ kind: 'done', sessionId: id })
+    }
+    prevRunning.set(id, isRunning)
+  }
   if (state.seeded) {
     const diff = diffPending(state.pending, next)
     for (const id of diff.cleared) {
@@ -134,11 +171,11 @@ export function step(
     // Baseline seed: mark everything as already alerted, alert nothing.
     for (const [id, status] of next) alerted.set(id, status)
   }
-  const flashing = next.size > 0 && settings.enabled && settings.titleFlash && visibilityState !== 'visible'
+  const flashing = next.size > 0 && settings.enabled && settings.titleFlash && needsAttention
   if (flashing && !state.flashing) actions.push({ kind: 'flash-start' })
   else if (!flashing && state.flashing) actions.push({ kind: 'flash-stop' })
   return {
-    state: { seeded: true, pending: next, alerted, flashing },
+    state: { seeded: true, pending: next, alerted, prevRunning, doneAlerted, flashing },
     actions,
   }
 }
