@@ -20,6 +20,8 @@ export interface SessionRowLike {
 /** Minimal session-list surface the engine reads (ctx.sessions.list snapshot shape). */
 export interface SessionListLike {
   byId: Record<string, SessionRowLike | undefined>
+  /** The session currently open in the UI; absent while no session is selected. */
+  current?: string
 }
 
 /**
@@ -141,16 +143,21 @@ export function step(
   const alerted = new Map(state.alerted)
   const prevRunning = new Map(state.prevRunning)
   const doneAlerted = new Map(state.doneAlerted)
-  const gated = !settings.enabled || (settings.onlyWhenHidden && !needsAttention)
-  const doneAllowed = settings.enabled && settings.notifyOnDone
-    && (!settings.onlyWhenHidden || needsAttention)
+  // "On top" silence applies to the CURRENT session only: interactions from
+  // other sessions must alert even while the user is chatting elsewhere.
+  const currentId = snapshot.current
+  const pendingSuppressed = (id: string): boolean =>
+    !settings.enabled || (settings.onlyWhenHidden && !needsAttention && id === currentId)
+  const doneAllowed = (id: string): boolean =>
+    settings.enabled && settings.notifyOnDone
+    && (!settings.onlyWhenHidden || needsAttention || id !== currentId)
   for (const [id, row] of Object.entries(snapshot.byId)) {
     if (row === undefined) continue
     const wasRunning = prevRunning.get(id) === true
     const isRunning = row.running === true
     const updatedAt = row.updatedAt ?? 0
     if (state.seeded && wasRunning && !isRunning && row.origin !== 'subagent'
-      && doneAllowed && doneAlerted.get(id) !== updatedAt) {
+      && doneAllowed(id) && doneAlerted.get(id) !== updatedAt) {
       doneAlerted.set(id, updatedAt)
       actions.push({ kind: 'done', sessionId: id })
     }
@@ -162,7 +169,7 @@ export function step(
       if (alerted.delete(id)) actions.push({ kind: 'dismiss', sessionId: id })
     }
     for (const [id, status] of next) {
-      if (alerted.get(id) !== status && !gated) {
+      if (alerted.get(id) !== status && !pendingSuppressed(id)) {
         alerted.set(id, status)
         actions.push({ kind: 'alert', sessionId: id, status })
       }

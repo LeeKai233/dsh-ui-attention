@@ -24,12 +24,12 @@ describe('turn-finished detection', () => {
     expect(second.actions).toContainEqual({ kind: 'done', sessionId: 's1' })
   })
 
-  it('stays quiet while the page is on top (onlyWhenHidden)', () => {
-    const first = step(initialState(), snapshot({ s1: { running: true, updatedAt: 1 } }), SETTINGS, false)
-    const second = step(first.state, snapshot({ s1: { running: false, updatedAt: 2 } }), SETTINGS, false)
+  it('stays quiet for the CURRENT session while the page is on top (onlyWhenHidden)', () => {
+    const first = step(initialState(), { ...snapshot({ s1: { running: true, updatedAt: 1 } }), current: 's1' }, SETTINGS, false)
+    const second = step(first.state, { ...snapshot({ s1: { running: false, updatedAt: 2 } }), current: 's1' }, SETTINGS, false)
     expect(second.actions).toEqual([])
     // The edge was consumed; hiding later must not fire a stale done.
-    const third = step(second.state, snapshot({ s1: { running: false, updatedAt: 2 } }), SETTINGS, true)
+    const third = step(second.state, { ...snapshot({ s1: { running: false, updatedAt: 2 } }), current: 's1' }, SETTINGS, true)
     expect(third.actions.filter(a => a.kind === 'done')).toEqual([])
   })
 

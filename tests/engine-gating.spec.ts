@@ -23,9 +23,9 @@ describe('step gating', () => {
     expect(actions).toEqual([])
   })
 
-  it('suppresses alerts while on top with onlyWhenHidden, and alerts once not on top', () => {
+  it('suppresses alerts for the CURRENT session while on top, and alerts once not on top', () => {
     const state = seeded()
-    const snap = snapshot({ s1: { pendingInteraction: 'question' } })
+    const snap = { ...snapshot({ s1: { pendingInteraction: 'question' } }), current: 's1' }
     const onTop = step(state, snap, SETTINGS, false)
     expect(onTop.actions).toEqual([])
     const notOnTop = step(onTop.state, snap, SETTINGS, true)
