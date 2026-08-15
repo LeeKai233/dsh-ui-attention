@@ -36,6 +36,7 @@ describe('built client bundle loader handoff', () => {
       'react/jsx-runtime': { jsx: () => ({}), jsxs: () => ({}), Fragment: {} },
       react: { createElement: () => ({}), Fragment: {} },
       'react-dom': { createPortal: (node: unknown) => node },
+      '@deepseek-ai/dsh-client-ui-primitives': { FishLogo: () => ({}) },
       '@deepseek-ai/dsh-client-runtime/client': {
         defineStore: runtimeShim.defineStore,
         createSnapshotStore: runtimeShim.defineStore,

@@ -104,6 +104,9 @@ describe('AttentionRow', () => {
     expect(screen.getByText('test.title')).toBeTruthy()
     expect(screen.getByText('test.body')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'row.close' })).toBeTruthy()
+    // The popup mimics the Windows toast: it carries the app icon.
+    const toast = document.querySelector('[data-dsh-attention-toast]')
+    expect(toast?.querySelector('svg')).toBeTruthy()
     // Still fires the system notification flow.
     expect(injected.test).toHaveBeenCalledTimes(1)
   })
