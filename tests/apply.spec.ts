@@ -131,6 +131,20 @@ describe('client apply assembly', () => {
     expect(created[0]?.closed).toBe(true)
   })
 
+  it('alerts for a NON-current session pending even while the page is focused on top', () => {
+    vi.stubGlobal('Notification', FakeNotificationCtor)
+    // jsdom: document.hasFocus() = true, visibilityState = visible -> on top, focused.
+    const built = buildContext({ byId: {} })
+    apply(built.ctx as never)
+    built.listSnapshot.set({
+      ...snapshotOf({ s1: 'approval' }),
+      current: 's-current',
+      byId: { ...snapshotOf({ s1: 'approval' }).byId, 's-current': { displayTitle: 'Current' } },
+    })
+    built.notify()
+    expect(created).toHaveLength(1)
+    expect(created[0]?.tag).toBe('dsh-attention:s1')
+  })
   it('listens to window blur/focus for the not-on-top signal', () => {
     vi.stubGlobal('Notification', FakeNotificationCtor)
     const blurSpy = vi.spyOn(window, 'addEventListener')

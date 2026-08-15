@@ -37,9 +37,10 @@ export interface BeepTone {
   durationMs: number
 }
 
-/** Default two-tone attention beep (880Hz / 120ms, 660Hz / 180ms). */
+/** Default three-tone attention beep (880Hz/120ms + 660Hz/180ms x2 — longer tail cuts through music). */
 export const DEFAULT_TONES: readonly BeepTone[] = [
   { frequency: 880, durationMs: 120 },
+  { frequency: 660, durationMs: 180 },
   { frequency: 660, durationMs: 180 },
 ]
 
@@ -100,7 +101,7 @@ export class Beeper {
       oscillator.frequency.setValueAtTime(tone.frequency, cursor)
       const gain = context.createGain()
       gain.gain.setValueAtTime(0.0001, cursor)
-      gain.gain.linearRampToValueAtTime(0.2, cursor + 0.01)
+      gain.gain.linearRampToValueAtTime(0.35, cursor + 0.01)
       gain.gain.linearRampToValueAtTime(0.0001, cursor + duration)
       oscillator.connect(gain)
       gain.connect(context.destination)

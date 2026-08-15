@@ -47,18 +47,20 @@ function makeContext(overrides: Partial<AudioContextLike> = {}): AudioContextLik
 }
 
 describe('Beeper', () => {
-  it('schedules the two default tones back to back', () => {
+  it('schedules the three default tones back to back', () => {
     const context = makeContext()
     const beeper = new Beeper(() => context)
     beeper.unlock()
     beeper.beep()
     const oscs = context.oscillators as (OscillatorLike & Scheduled)[]
-    expect(oscs).toHaveLength(2)
+    expect(oscs).toHaveLength(3)
     expect(oscs[0]?.freq).toBe(880)
     expect(oscs[0]?.start).toBeCloseTo(10.01)
     expect(oscs[0]?.stop).toBeCloseTo(10.01 + 0.12)
     expect(oscs[1]?.freq).toBe(660)
     expect(oscs[1]?.start).toBeCloseTo(10.01 + 0.12 + 0.08)
+    expect(oscs[2]?.freq).toBe(660)
+    expect(oscs[2]?.start).toBeCloseTo(10.01 + 0.12 + 0.08 + 0.18 + 0.08)
   })
 
   it('creates the AudioContext lazily on the first unlock', () => {
