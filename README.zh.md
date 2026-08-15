@@ -66,6 +66,14 @@ dsh plugin --profile web add file:/path/to/dsh-ui-attention
   `default` 时该行会显示启用提示，插件自动降级为 声音 + 标题闪烁。
 - 刷新页面或重连不会重复提醒；交互解决后对应通知自动关闭、标题恢复。
 
+General 设置中的「通知与提醒」模块：
+
+![通知与提醒设置模块](docs/demo-settings.png)
+
+点击「发送测试通知」会在页面内弹出通知卡片（系统通知与提示音同时照常发送）：
+
+![测试通知弹窗](docs/demo-test-notification.png)
+
 ## 设置项
 
 5 个开关（默认全部开启）持久化在浏览器的 localStorage 键

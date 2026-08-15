@@ -42,7 +42,7 @@ const TOAST_CLOSE: CSSProperties = {
  */
 export function TestToast({ title, body, closeLabel, onClose }: TestToastProps) {
   return createPortal(
-    <div style={TOAST} role="dialog" aria-label={title}>
+    <div style={TOAST} role="dialog" aria-label={title} data-dsh-attention-toast="">
       <div style={TOAST_TITLE}>{title}</div>
       <div style={TOAST_BODY}>{body}</div>
       <button type="button" style={TOAST_CLOSE} aria-label={closeLabel} onClick={onClose}>{closeLabel}</button>

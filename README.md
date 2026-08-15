@@ -79,6 +79,15 @@ profile patch layer (`~/.dsh/profiles/web/cordis.patch.yml`):
 - Refreshing or reconnecting does not re-alert; resolving the interaction
   closes its notification and stops the title flash.
 
+The **Notifications** row in General settings:
+
+![Notifications settings row](docs/demo-settings.png)
+
+Clicking **Send test notification** pops an in-page notification card (the
+system notification and beep fire as well):
+
+![Test notification popup](docs/demo-test-notification.png)
+
 ## Settings
 
 The five switches (all default true) persist in the browser under the
