@@ -6,12 +6,14 @@
  * padding, hairline separator — identical values to ui-agent-preset /
  * ui-permission-presets / ui-conversation / ui-locale rows).
  */
+import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import type { PropsLocale, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
 import { defineStore, type EngineStoreHandle } from '@deepseek-ai/dsh-client-runtime/client'
 import { DEFAULT_ATTENTION_SETTINGS } from '../attention-settings.ts'
 import type { AttentionSettings } from '../attention-settings.ts'
 import type { PermissionState } from './notifications.ts'
+import { TestToast } from './TestToast.tsx'
 
 /** Row state mirrored from the settings store and the permission platform. */
 export interface AttentionRowState {
@@ -145,6 +147,7 @@ export function AttentionRow(props: AttentionRowComponentProps) {
   const { t, useStore, setEnabled, setSound, setTitleFlash, setOnlyWhenHidden, setNotifyOnDone, test } = props
   const settings = useStore(s => s.settings)
   const permission = useStore(s => s.permission)
+  const [toastOpen, setToastOpen] = useState(false)
   const description = permission === 'default'
     ? t('row.permissionHint')
     : permission === 'denied' || permission === 'unavailable'
@@ -157,7 +160,13 @@ export function AttentionRow(props: AttentionRowComponentProps) {
           <div style={TITLE}>{t('row.title')}</div>
           <div style={DESC}>{description}</div>
         </div>
-        <button type="button" style={PILL} onClick={() => { void test() }}>{t('row.test')}</button>
+        <button
+          type="button"
+          style={PILL}
+          onClick={() => { setToastOpen(true); void test() }}
+        >
+          {t('row.test')}
+        </button>
       </div>
       <ToggleRow
         label={t('row.enabled')}
@@ -189,6 +198,14 @@ export function AttentionRow(props: AttentionRowComponentProps) {
         checked={settings.notifyOnDone}
         onChange={setNotifyOnDone}
       />
+      {toastOpen && (
+        <TestToast
+          title={t('test.title')}
+          body={t('test.body')}
+          closeLabel={t('row.close')}
+          onClose={() => { setToastOpen(false) }}
+        />
+      )}
     </div>
   )
 }

@@ -35,6 +35,7 @@ describe('built client bundle loader handoff', () => {
     const moduleTable: Record<string, unknown> = {
       'react/jsx-runtime': { jsx: () => ({}), jsxs: () => ({}), Fragment: {} },
       react: { createElement: () => ({}), Fragment: {} },
+      'react-dom': { createPortal: (node: unknown) => node },
       '@deepseek-ai/dsh-client-runtime/client': {
         defineStore: runtimeShim.defineStore,
         createSnapshotStore: runtimeShim.defineStore,

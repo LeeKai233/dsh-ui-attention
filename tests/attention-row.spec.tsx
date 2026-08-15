@@ -95,6 +95,30 @@ describe('AttentionRow', () => {
     expect(injected.test).toHaveBeenCalledTimes(1)
   })
 
+  it('opens an in-page test popup when the test pill is clicked', () => {
+    const injected = verbs()
+    const instance = createAttentionRowStore().create()
+    render(<Harness instance={instance} injected={injected} />)
+    expect(screen.queryByText('test.title')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'row.test' }))
+    expect(screen.getByText('test.title')).toBeTruthy()
+    expect(screen.getByText('test.body')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'row.close' })).toBeTruthy()
+    // Still fires the system notification flow.
+    expect(injected.test).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes the in-page popup via its close button and reopens on the next click', () => {
+    const instance = createAttentionRowStore().create()
+    render(<Harness instance={instance} injected={verbs()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'row.test' }))
+    expect(screen.getByText('test.title')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'row.close' }))
+    expect(screen.queryByText('test.title')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'row.test' }))
+    expect(screen.getByText('test.title')).toBeTruthy()
+  })
+
   it('shows the enable hint while permission is default', () => {
     const instance = createAttentionRowStore().create()
     instance.actions.sync({ ...DEFAULT_ATTENTION_SETTINGS })
