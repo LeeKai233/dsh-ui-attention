@@ -68,11 +68,11 @@ dsh plugin --profile web add file:/path/to/dsh-ui-attention
 
 General 设置中的「通知与提醒」模块：
 
-![通知与提醒设置模块](docs/demo-settings.png)
+![通知与提醒设置模块](assets/%E8%AE%BE%E7%BD%AE%E7%95%8C%E9%9D%A2.png)
 
 点击「发送测试通知」会在页面内弹出通知卡片（系统通知与提示音同时照常发送）：
 
-![测试通知弹窗](docs/demo-test-notification.png)
+![测试通知弹窗](assets/%E9%80%9A%E7%9F%A5%E6%A0%B7%E5%BC%8F.png)
 
 ## 设置项
 

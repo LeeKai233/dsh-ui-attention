@@ -81,12 +81,12 @@ profile patch layer (`~/.dsh/profiles/web/cordis.patch.yml`):
 
 The **Notifications** row in General settings:
 
-![Notifications settings row](docs/demo-settings.png)
+![Notifications settings row](assets/%E8%AE%BE%E7%BD%AE%E7%95%8C%E9%9D%A2.png)
 
 Clicking **Send test notification** pops an in-page notification card (the
 system notification and beep fire as well):
 
-![Test notification popup](docs/demo-test-notification.png)
+![Test notification popup](assets/%E9%80%9A%E7%9F%A5%E6%A0%B7%E5%BC%8F.png)
 
 ## Settings
 
