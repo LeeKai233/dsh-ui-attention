@@ -61,10 +61,14 @@ profile patch layer (`~/.dsh/profiles/web/cordis.patch.yml`):
 - Open **General settings** in the web UI: the **Notifications** row holds five
   iOS-style switches (Notifications / Sound / Title flash / Background only /
   Turn finished) and a **Send test notification** button.
-- **When do alerts fire?** Whenever the DSH page is not on top — the tab is
-  hidden, the window is minimized, or another application covers it
-  (document.hidden or !document.hasFocus()). While the page is on top and
-  focused, everything stays quiet.
+- **When do alerts fire?** Two rules:
+  1. While the DSH page is not on top — tab hidden, window minimized, or
+     another application covers it — every event alerts (pending interactions
+     and finished turns alike).
+  2. While the page is on top and focused, the CURRENT session stays quiet
+     (its question/approval card is right in front of you) — but events from
+     ANY OTHER session still alert, so a background task that needs you is
+     never missed while you chat elsewhere.
 - Two event kinds alert: pending interactions (a question, a plan approval, or
   a tool approval) and **finished turns** (any session's running flip), each
   once per turn, with the session title in the body; clicking a notification
@@ -85,7 +89,7 @@ localStorage key dsh-ui-attention.settings:
 | enabled | Master switch: popup, sound, and title flash all stay quiet when false |
 | sound | Play the WebAudio beep |
 | titleFlash | Flash the tab title while pending work is hidden |
-| onlyWhenHidden | Alert only while the page is not on top; false alerts even on top |
+| onlyWhenHidden | Applies to the CURRENT session: stay quiet while on top; other sessions always alert (false alerts even the current session on top) |
 | notifyOnDone | Pop up and beep when a session's turn finishes |
 
 Why browser-local instead of the Host settings document: the rc.6 web API
@@ -100,9 +104,12 @@ section lights up automatically once that upstream limitation is lifted.
 
 - **No popup?** Allow notifications for the site in your browser, then click
   the test button once. Denied permission degrades to sound + title.
-- **Page covered by another app but no alert?** The plugin treats "on top and
-  focused" as "you are looking at it". Turn off **Background only** to alert
-  even when the page is on top.
+- **Working in session B while session A needs me — why no popup before?**
+  Fixed: events from NON-current sessions always alert, even while the page is
+  on top. Only the session you are currently viewing stays quiet on top.
+- **Page covered by another app but no alert?** The plugin treats "on top
+  and focused" as "you are looking at it" for the current session. Turn off
+  **Background only** to alert even the current session while on top.
 - **No sound?** Audio playback needs one prior user gesture (autoplay policy);
   the plugin unlocks on the first click/keypress and retries on later gestures.
 - **Several tabs open?** Each tab alerts on its own (cross-tab dedupe is not
