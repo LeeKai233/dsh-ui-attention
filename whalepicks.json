@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0",
+  "id": "dsh-ui-attention",
+  "name": "dsh-ui-attention",
+  "version": "0.1.2",
+  "description": {
+    "zh": "DSH Web 操作提醒：页面不在前台时，用浏览器通知、提示音、标题闪烁提醒待处理交互与回合完成",
+    "en": "Web attention alerts: browser notification, beep and tab-title flash when the DSH page is not on top"
+  },
+  "category": "notifications",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "notification",
+    "web",
+    "attention"
+  ],
+  "scope": {
+    "does": [
+      "当 DSH 页面不在前台时，对两类事件发出本地提醒（浏览器通知 + 提示音 + 标题闪烁）：待处理交互（提问/审批）与回合完成"
+    ],
+    "doesNot": [
+      "不发送任何网络请求，不上传任何数据（提醒完全在浏览器本地合成）",
+      "不改变会话行为、模型调用或任何 DSH 内部逻辑",
+      "不提供跨设备推送或移动端通知（那是另一个产品的事）"
+    ]
+  },
+  "install": {
+    "profile": "web",
+    "spec": "dsh-ui-attention"
+  },
+  "runtime": {
+    "platforms": [
+      "web"
+    ],
+    "dsh": ">=0.1.0-rc.6 <0.2.0"
+  },
+  "patches": {
+    "bundle": "cordis.patch.yml",
+    "insertIds": [
+      "ui-attention"
+    ],
+    "namespaces": [
+      "ui-attention"
+    ],
+    "slots": [
+      "settings.general.item"
+    ]
+  },
+  "capabilities": {
+    "network": false,
+    "telemetry": false,
+    "permissions": [
+      "browser-notifications"
+    ]
+  },
+  "cost": {
+    "license": "MIT",
+    "paid": false,
+    "paidTiers": []
+  },
+  "links": {
+    "repo": "https://github.com/LeeKai233/dsh-ui-attention",
+    "npm": "https://www.npmjs.com/package/dsh-ui-attention"
+  },
+  "maintainers": [
+    {
+      "name": "LeeKai233",
+      "contact": "https://github.com/LeeKai233"
+    }
+  ]
+}
