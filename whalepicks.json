@@ -61,10 +61,6 @@
     "gpu": false,
     "timers": 0
   },
-  "security": {
-    "verdict": "passed",
-    "scanBy": "whalepicks check-plugin"
-  },
   "cost": {
     "license": "MIT",
     "paid": false,
