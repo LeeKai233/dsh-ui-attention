@@ -36,7 +36,7 @@ export default defineConfig([
     dts: false,
     fixedExtension: false,
     clean: false,
-    external: NODE_EXTERNALS,
+    deps: { neverBundle: NODE_EXTERNALS },
   },
   {
     name: PLUGIN_ID + '/client',
@@ -47,7 +47,7 @@ export default defineConfig([
     dts: false,
     sourcemap: true,
     clean: false,
-    external: [...PLATFORM_MODULES, RUNTIME_STORE_EXEMPTION],
+    deps: { neverBundle: [...PLATFORM_MODULES, RUNTIME_STORE_EXEMPTION] },
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'production'),
       'import.meta.env.MODE': JSON.stringify(process.env.NODE_ENV ?? 'production'),
