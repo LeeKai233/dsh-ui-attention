@@ -68,8 +68,11 @@ dsh plugin --profile web remove dsh-ui-attention
 
 ## 鲸选
 
-本插件基于鲸选插件模板构建，并通过鲸选商店门槛校验。
+本插件基于鲸选插件模板构建，并通过鲸选商店门槛校验。本仓库是鲸选范式的**试验品**
+（第一个过范式的插件）：固定分区一个不少，「唯一一件事」填进扩展点，有意豁免清单见
+docs/DEVELOPMENT.zh.md。迁移前基线存档：git tag v0.1.2-pre-paradigm。
 
+- 鲸选范式：https://github.com/LeeKai233/dsh-whale-picks/blob/main/spec/PARADIGM.md
 - 鲸选商店：https://github.com/LeeKai233/dsh-whale-picks
 - 插件模板：https://github.com/LeeKai233/dsh-whale-picks/tree/main/templates/plugin
 - 开发者文档：[docs/DEVELOPMENT.zh.md](docs/DEVELOPMENT.zh.md)

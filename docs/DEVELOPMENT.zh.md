@@ -1,5 +1,20 @@
 # DEVELOPMENT.zh.md — dsh-ui-attention 开发者文档
 
+## 有意豁免清单（范式试验品）
+
+本仓库是鲸选范式的试验品。用 dsh-whale-picks/scripts 的 --structure /
+template-sync 对照时，以下有意豁免是比对基准（其余全部与模板对齐）：
+
+1. **设置持久化**使用 runtime 快照存储引擎（defineStore，来自
+   @deepseek-ai/dsh-client-runtime/client），而非模板的裸 localStorage 版本
+   ——扩展点 4 的惯用法 2。
+2. **tsdown PLATFORM_MODULES** 在模板核心之外增加
+   @deepseek-ai/dsh-client-ui-attachment 与 @deepseek-ai/dsh-client-schema-form
+   ——模板给全量清单、插件按需裁剪；本插件客户端恰好 import 这两个。
+3. **devDependencies** 在模板基线之外增加 @deepseek-ai/dsh-client-ui-primitives、
+   @deepseek-ai/dsh-client-ui-settings 与 @testing-library/react（组件测试用）。
+4. **tests/shims** 目录源自本仓库并已回流进模板——现在天然对齐。
+
 ## 构建与测试
 
 ```sh

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "1.1",
   "id": "dsh-ui-attention",
   "name": "dsh-ui-attention",
   "version": "0.1.2",
@@ -53,6 +53,17 @@
     "permissions": [
       "browser-notifications"
     ]
+  },
+  "deps": [],
+  "perf": {
+    "polls": {},
+    "memoryEstimateMB": 2,
+    "gpu": false,
+    "timers": 0
+  },
+  "security": {
+    "verdict": "passed",
+    "scanBy": "whalepicks check-plugin"
   },
   "cost": {
     "license": "MIT",

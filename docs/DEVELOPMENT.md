@@ -1,5 +1,25 @@
 # DEVELOPMENT.md — dsh-ui-attention developer docs
 
+## Documented exemptions (paradigm trial subject)
+
+This repo is the whale-picks paradigm's trial subject. When running
+--structure / template-sync from dsh-whale-picks/scripts, the following
+deliberate exemptions are the comparison baseline (everything else is
+template-aligned):
+
+1. **Settings persistence** uses the runtime snapshot-store engine
+   (defineStore from @deepseek-ai/dsh-client-runtime/client) instead of the
+   template's plain localStorage store — extension point 4, idiom 2.
+2. **tsdown PLATFORM_MODULES** adds @deepseek-ai/dsh-client-ui-attachment and
+   @deepseek-ai/dsh-client-schema-form beyond the template core — the template
+   ships the full inventory and asks plugins to trim; this plugin's client
+   imports exactly these.
+3. **devDependencies** add @deepseek-ai/dsh-client-ui-primitives,
+   @deepseek-ai/dsh-client-ui-settings and @testing-library/react (component
+   tests) beyond the template baseline.
+4. The **tests/shims** directory originated here and was merged back into the
+   template — now aligned by construction.
+
 ## Build and test
 
 ```sh

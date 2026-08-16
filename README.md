@@ -69,7 +69,12 @@ Five switches, stored in the browser, all on by default.
 ## Whale picks
 
 Built on the whale-picks plugin template and verified by the whale-picks store gates.
+This repo is the whale-picks paradigm's **trial subject** (the first plugin through
+the paradigm): fixed sections intact, ONE thing filled into the extension points,
+documented exemptions listed in docs/DEVELOPMENT.md. Pre-migration baseline:
+git tag v0.1.2-pre-paradigm.
 
+- Paradigm: https://github.com/LeeKai233/dsh-whale-picks/blob/main/spec/PARADIGM.md
 - Store: https://github.com/LeeKai233/dsh-whale-picks
 - Template: https://github.com/LeeKai233/dsh-whale-picks/tree/main/templates/plugin
 - Developer docs: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
